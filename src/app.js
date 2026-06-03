@@ -16,6 +16,7 @@ const indexRouter = require("../routes/index");
 const usersRouter = require("../routes/users");
 
 const departmentController = require("./controllers/departmentController");
+const regionController = require("./controllers/regionController");
 
 const app = express();
 
@@ -57,6 +58,13 @@ app.delete(
   `${appConfig.api.prefix}/departments/:id`,
   departmentController.remove,
 );
+
+// routing region
+app.get(`${appConfig.api.prefix}/regions`, regionController.findAll);
+app.get(`${appConfig.api.prefix}/regions/:id`, regionController.findById);
+app.post(`${appConfig.api.prefix}/regions`, regionController.create);
+app.put(`${appConfig.api.prefix}/regions/:id`, regionController.update);
+app.delete(`${appConfig.api.prefix}/regions/:id`, regionController.remove);
 
 // inject paling bawah setelah routing: Global Error Handler dipanggil setelah semua rute gagal match
 app.use(globalErrorHandler);
