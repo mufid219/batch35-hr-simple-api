@@ -61,6 +61,12 @@ app.delete(
 );
 
 // routing region
+
+app.get(
+  `${appConfig.api.prefix}/regions/countries`,
+  regionController.getRegionsWithCountries,
+);
+
 app.get(`${appConfig.api.prefix}/regions`, regionController.findAll);
 app.get(`${appConfig.api.prefix}/regions/:id`, regionController.findById);
 app.post(`${appConfig.api.prefix}/regions`, regionController.create);

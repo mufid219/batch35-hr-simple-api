@@ -1,4 +1,5 @@
 const regionRepository = require("../repositories/regionRepository");
+const { NotFoundError } = require("../utils/customError");
 
 class RegionService {
   async getAllRegions() {
@@ -55,6 +56,17 @@ class RegionService {
       throw error;
     }
     return true;
+  }
+
+  async getAllRegionsWithCountries() {
+    const regions = await regionRepository.findAllWithCountries();
+
+    // Validasi: Jika data kosong atau tidak ada region sama sekali
+    if (!regions || regions.length === 0) {
+      throw new NotFoundError("No regions or countries found in the database.");
+    }
+
+    return regions;
   }
 }
 
