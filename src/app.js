@@ -48,6 +48,15 @@ app.use(`${appConfig.api.prefix}/`, indexRouter);
 app.use(`${appConfig.api.prefix}/users`, usersRouter);
 
 // routing department
+app.get(
+  `${appConfig.api.prefix}/departments/employees`,
+  departmentController.getDepartmentWithCountries,
+);
+app.post(
+  `${appConfig.api.prefix}/departments/employees`,
+  departmentController.createEmployees,
+);
+
 app.get(`${appConfig.api.prefix}/departments`, departmentController.findAll);
 app.get(
   `${appConfig.api.prefix}/departments/:id`,

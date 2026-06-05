@@ -79,6 +79,39 @@ class DepartmentController {
       next(error);
     }
   };
+
+  getDepartmentWithCountries = async (req, res, next) => {
+    try {
+      const data = await departmentService.getAllDepartmentsWithEmployees();
+
+      return res.success(
+        "Department with employees retrieved successfully",
+        data,
+        200,
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createEmployees = async (req, res, next) => {
+    try {
+      const { departmentId, employees } = req.body;
+
+      const data = await departmentService.addEmployeesToDepartment(
+        departmentId,
+        employees,
+      );
+
+      return res.success(
+        "Employees successfully added to the department",
+        data,
+        200,
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 module.exports = new DepartmentController();

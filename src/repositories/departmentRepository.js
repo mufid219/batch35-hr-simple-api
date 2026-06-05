@@ -95,6 +95,91 @@ class DepartmentRepository {
       if (conn) await conn.close();
     }
   }
+
+  async findAllWithEmployee() {
+    let conn;
+    try {
+      conn = await getConnection();
+
+      const query = `
+        SELECT
+            d.department_id,
+            d.department_name,
+            e.employee_id,
+            e.first_name,
+            e.last_name
+        FROM departments d
+        LEFT JOIN employees e
+            ON d.department_id = e.department_id
+        ORDER BY d.department_id
+      `;
+
+      const result = await conn.execute(query);
+      const rows = result.rows;
+
+      // console.log(rows[0]);
+      // console.log(Array.isArray(rows[0]));
+
+      const nestedData = rows.reduce((acc, row) => {
+        let department = acc.find(
+          (item) => item.departmentId === row.DEPARTMENT_ID,
+        );
+
+        if (!department) {
+          department = {
+            departmentId: row.DEPARTMENT_ID,
+            departmentName: row.DEPARTMENT_NAME,
+            employees: [],
+          };
+          acc.push(department);
+        }
+
+        if (row.EMPLOYEE_ID) {
+          department.employees.push({
+            employeeId: row.EMPLOYEE_ID,
+            firstName: row.FIRST_NAME,
+            lastName: row.LAST_NAME,
+          });
+        }
+        return acc;
+      }, []);
+
+      return nestedData;
+      //     const departmentMap = new Map();
+
+      //     console.log(result.rows[0]);
+      //     console.log(Array.isArray(result.rows[0]));
+
+      //     for (const row of result.rows) {
+      //       if (!departmentMap.has(row.DEPARTMENT_ID)) {
+      //         departmentMap.set(row.DEPARTMENT_ID, {
+      //           departmentId: row.DEPARTMENT_ID,
+      //           departmentName: row.DEPARTMENT_NAME,
+      //           employees: [],
+      //         });
+      //       }
+
+      //       const department = departmentMap.get(row.DEPARTMENT_ID);
+
+      //       if (row.EMPLOYEE_ID) {
+      //         department.employees.push({
+      //           employeeId: row.EMPLOYEE_ID,
+      //           firstName: row.FIRST_NAME,
+      //           lastName: row.LAST_NAME,
+      //         });
+      //       }
+      //     }
+
+      //     return [...departmentMap.values()];
+    } catch (error) {
+      console.error(
+        "Error in DepartmentRepository.findAllWithEmployee:",
+        error.message,
+      );
+    } finally {
+      if (conn) await conn.close();
+    }
+  }
 }
 
 module.exports = new DepartmentRepository();
