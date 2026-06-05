@@ -66,6 +66,10 @@ app.get(
   `${appConfig.api.prefix}/regions/countries`,
   regionController.getRegionsWithCountries,
 );
+app.post(
+  `${appConfig.api.prefix}/regions/countries`,
+  regionController.createCountries,
+);
 
 app.get(`${appConfig.api.prefix}/regions`, regionController.findAll);
 app.get(`${appConfig.api.prefix}/regions/:id`, regionController.findById);

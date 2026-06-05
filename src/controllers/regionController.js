@@ -70,6 +70,25 @@ class RegionController {
       next(error);
     }
   };
+
+  createCountries = async (req, res, next) => {
+    try {
+      const { regionId, countries } = req.body;
+
+      const data = await regionService.addCountriesToRegion(
+        regionId,
+        countries,
+      );
+
+      return res.success(
+        "Countries successfully added to the region.",
+        data,
+        201,
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 module.exports = new RegionController();
