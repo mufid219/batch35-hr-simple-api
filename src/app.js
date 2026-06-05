@@ -6,16 +6,8 @@ const logger = require("morgan");
 const cors = require("cors");
 
 // 2. Middlewares & Utilities
-const { getConnection } = require("./utils/db");
 const { globalErrorHandler } = require("./middlewares/errorMiddleware");
 const { globalResponseHandler } = require("./utils/response");
-const { validateBody } = require("./middlewares/validateMiddleware");
-const {
-  createDepartmentSchema,
-} = require("./validatation/departmentValidation");
-const {
-  createRegionCountriesSchema,
-} = require("./validatation/regionValidation");
 
 // 3. Controllers, Routes & Configurations
 const appConfig = require("./config/appConfig");
@@ -58,61 +50,6 @@ app.use(globalResponseHandler);
 
 // call global router
 app.use(appConfig.api.prefix, indexRouter);
-
-// routing department
-// app.get(
-//   `${appConfig.api.prefix}/departments/employees`,
-//   departmentController.getDepartmentWithCountries,
-// );
-// app.post(
-//   `${appConfig.api.prefix}/departments/employees`,
-//   departmentController.createEmployees,
-// );
-
-// app.get(`${appConfig.api.prefix}/departments`, departmentController.findAll);
-// app.get(
-//   `${appConfig.api.prefix}/departments/:id`,
-//   departmentController.findById,
-// );
-
-// // contoh validasi using schemaDepartmentValidation, penggunaan middleware
-// app.post(
-//   `${appConfig.api.prefix}/departments`,
-//   validateBody(createDepartmentSchema),
-//   departmentController.create,
-// );
-
-// app.put(`${appConfig.api.prefix}/departments/:id`, departmentController.update);
-// app.delete(
-//   `${appConfig.api.prefix}/departments/:id`,
-//   departmentController.remove,
-// );
-
-// routing region
-
-// app.get(
-//   `${appConfig.api.prefix}/regions/countries`,
-//   regionController.getRegionsWithCountries,
-// );
-// // validation region
-// app.post(
-//   `${appConfig.api.prefix}/regions/countries`,
-//   validateBody(createRegionCountriesSchema),
-//   regionController.createCountries,
-// );
-
-// app.get(`${appConfig.api.prefix}/regions`, regionController.findAll);
-// app.get(`${appConfig.api.prefix}/regions/:id`, regionController.findById);
-// app.post(`${appConfig.api.prefix}/regions`, regionController.create);
-// app.put(`${appConfig.api.prefix}/regions/:id`, regionController.update);
-// app.delete(`${appConfig.api.prefix}/regions/:id`, regionController.remove);
-
-// routing country
-// app.get(`${appConfig.api.prefix}/countries`, countryController.findAll);
-// app.get(`${appConfig.api.prefix}/countries/:id`, countryController.findById);
-// app.post(`${appConfig.api.prefix}/countries`, countryController.create);
-// app.put(`${appConfig.api.prefix}/countries/:id`, countryController.update);
-// app.delete(`${appConfig.api.prefix}/countries/:id`, countryController.remove);
 
 // inject paling bawah setelah routing: Global Error Handler dipanggil setelah semua rute gagal match
 app.use(globalErrorHandler);
