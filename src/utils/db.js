@@ -19,4 +19,16 @@ async function getConnection() {
   }
 }
 
-module.exports = { oracledb, getConnection };
+async function closeConnectionPool() {
+  try {
+    const pool = oracledb.getPool();
+    if (pool) {
+      await pool.close(0);
+    }
+  } catch (err) {
+    console.error("Error closing pool:", err);
+    throw err;
+  }
+}
+
+module.exports = { oracledb, getConnection, closeConnectionPool };
