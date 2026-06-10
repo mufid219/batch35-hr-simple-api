@@ -1,12 +1,35 @@
 const overtimeService = require("../services/overtimeService");
 
 class OvertimeController {
-  findAllById = async (req, res, next) => {
+  findAllFromUser = async (req, res, next) => {
     try {
       const { id } = req.body;
-      const data = await overtimeService.getAllOvertimesById(id);
+      const { fromMonth, fromYear, toMonth, toYear } = req.query;
+      const data = await overtimeService.getAllOvertimesFromUser(id, {
+        fromMonth,
+        fromYear,
+        toMonth,
+        toYear,
+      });
 
       return res.success("Overtime retrieved successfully", data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  findAllFromManager = async (req, res, next) => {
+    try {
+      const { id } = req.body;
+      const { fromMonth, fromYear, toMonth, toYear } = req.query;
+      const data = await overtimeService.getAllOvertimesFromManager(id, {
+        fromMonth,
+        fromYear,
+        toMonth,
+        toYear,
+      });
+
+      return res.success("Overtime retrived successfully", data);
     } catch (error) {
       next(error);
     }
@@ -31,6 +54,44 @@ class OvertimeController {
         overtimeId,
         employeeId,
         req.body,
+      );
+
+      return res.success("Overtime updated successfully", data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateStatus = async (req, res, next) => {
+    try {
+      const { id } = req.params;
+
+      const { managerId } = req.body;
+
+      const data = await overtimeService.updateStatus(
+        Number(id),
+        req.body,
+        managerId,
+      );
+
+      return res.success("Overtime updated successfully", data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  rejectStatus = async (req, res, next) => {
+    try {
+      const { id } = req.params;
+
+      const { managerId } = req.body;
+
+      const status = "REJECTED";
+
+      const data = await overtimeService.rejectedStatus(
+        Number(id),
+        status,
+        managerId,
       );
 
       return res.success("Overtime updated successfully", data);

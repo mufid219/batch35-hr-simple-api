@@ -3,75 +3,139 @@ const { oracledb, getConnection } = require("../utils/db");
 const calculateHours = require("../utils/totalHours");
 
 class OvertimeRepository {
-  async findAll(employeeId) {
+  async findEmployeeProfile(employeeId) {
     let conn;
 
     try {
       conn = await getConnection();
-      console.log(`employeeId = ${employeeId}, typeof ${typeof employeeId}`);
       const sql = `
-                    SELECT
-                        e.employee_id AS "employeeId",
-                        e.first_name AS "firstName",
-                        e.last_name AS "lastName",
-                        j.job_title AS "jobTitle",
-                        o.overtime_id AS "overtimeId",
-                        o.project_name AS "projectName",
-                        o.overtime_date AS "overtimeDate",
-                        o.start_time AS "startTime",
-                        o.end_time AS "endTime",
-                        o.total_hours AS "totalHours",
-                        o.status AS "status",
-                        approver.first_name || ' ' || approver.last_name AS "approvedBy"
-                    FROM employees e
-                    JOIN jobs j
-                        ON j.job_id = e.job_id
-                    LEFT JOIN overtimes o
-                        ON o.employee_id = e.employee_id
-                    LEFT JOIN employees approver
-                        ON approver.employee_id = o.approved_by
-                    WHERE e.employee_id = :employeeId
-                `;
+        SELECT
+            e.employee_id AS "employeeId",
+            e.first_name AS "firstName",
+            e.last_name AS "lastName",
+            j.job_title AS "jobTitle"
+        FROM employees e
+        JOIN jobs j
+            ON j.job_id = e.job_id
+        WHERE e.employee_id = :employeeId
+      `;
       const result = await conn.execute(sql, { employeeId });
 
-      const rows = result.rows;
-      /* console.log("rows");
-      console.log(rows); */
-
-      const employeeMap = new Map();
-
-      rows.forEach((row) => {
-        if (!employeeMap.has(row.employeeId)) {
-          employeeMap.set(row.employeeId, {
-            employee: {
-              employeeId: row.employeeId,
-              firstName: row.firstName,
-              lastName: row.lastName,
-              jobTitle: row.jobTitle,
-            },
-            overtimes: [],
-          });
-        }
-
-        employeeMap.get(row.employeeId).overtimes.push({
-          overtimeId: row.overtimeId,
-          projectName: row.projectName,
-          overtimeDate: row.overtimeDate,
-          startTime: row.startTime,
-          endTime: row.endTime,
-          totalHours: row.totalHours,
-          status: row.status,
-          approvedBy: row.approvedBy,
-        });
-      });
-
-      const finalResult = [...employeeMap.values()][0];
-
-      /* console.log("finalResult");
-      console.log(finalResult); */
-      return finalResult;
+      return result.rows;
     } catch (error) {
-      console.error("Error in OvertimeRepository.findAll:", error.message);
+      console.error(
+        "Error in OvertimeRepository.findEmployeeProfile:",
+        error.message,
+      );
+    } finally {
+      if (conn) await conn.close();
+    }
+  }
+
+  async findAllFromUser(employeeId, startDate, endDate) {
+    let conn;
+    try {
+      conn = await getConnection();
+      let sql = `
+      SELECT
+        o.overtime_id AS "overtimeId",
+        o.project_name AS "projectName",
+        o.overtime_date AS "overtimeDate",
+        o.start_time AS "startTime",
+        o.end_time AS "endTime",
+        o.total_hours AS "totalHours",
+        o.status AS "status",
+        approver.first_name || ' ' || approver.last_name AS "approvedBy",
+        o.approved_at AS "approvedAt"
+      FROM overtimes o
+      LEFT JOIN employees approver
+        ON approver.employee_id = o.approved_by
+      WHERE o.employee_id = :employeeId
+      
+    `;
+
+      const binds = {
+        employeeId,
+      };
+
+      if (startDate && endDate) {
+        sql += `
+        AND o.overtime_date
+        BETWEEN :startDate
+        AND :endDate
+      `;
+
+        binds.startDate = startDate;
+        binds.endDate = endDate;
+      }
+
+      sql += `
+      ORDER BY o.overtime_date DESC
+    `;
+
+      const result = await conn.execute(sql, binds);
+      return result.rows;
+    } catch (error) {
+      console.error(
+        "Error in OvertimeRepository.findAllFromUser:",
+        error.message,
+      );
+    } finally {
+      if (conn) await conn.close();
+    }
+  }
+
+  async findAllFromManager(startDate, endDate) {
+    let conn;
+    try {
+      conn = await getConnection();
+      let sql = `
+      SELECT
+          o.overtime_id AS "overtimeId",
+          o.project_name AS "projectName",
+          o.overtime_date AS "overtimeDate",
+          o.start_time AS "startTime",
+          o.end_time AS "endTime",
+          o.total_hours AS "totalHours",
+          o.status AS "status",
+
+          e.employee_id AS "employeeId",
+          e.first_name || ' ' || e.last_name AS "employeeName",
+
+          approver.first_name || ' ' || approver.last_name AS "approvedBy"
+      FROM overtimes o
+      JOIN employees e
+          ON e.employee_id = o.employee_id
+      LEFT JOIN employees approver
+          ON approver.employee_id = o.approved_by
+      
+    `;
+
+      const binds = {};
+
+      if (startDate && endDate) {
+        sql += `
+        WHERE o.overtime_date
+        BETWEEN :startDate
+        AND :endDate
+      `;
+
+        binds.startDate = startDate;
+        binds.endDate = endDate;
+      }
+
+      sql += `
+      ORDER BY o.overtime_date DESC
+    `;
+
+      const result = await conn.execute(sql, binds);
+
+      return result.rows;
+    } catch (error) {
+      console.error(
+        "Error in OvertimeRepository.findAllFromManager:",
+        error.message,
+      );
     } finally {
       if (conn) await conn.close();
     }
@@ -204,6 +268,85 @@ class OvertimeRepository {
       return { overtimeId: id, rowsAffected: result.rowsAffected };
     } catch {
       console.error("Error in OvertimeRepository.update:", error.message);
+    } finally {
+      if (conn) await conn.close();
+    }
+  }
+
+  async updateStatus(id, data) {
+    let conn;
+
+    try {
+      conn = await getConnection();
+
+      const sql = `
+        UPDATE overtimes
+        SET
+          status = :status,
+          notes = :notes,
+          approved_by = :approvedBy,
+          approved_at = SYSDATE
+        WHERE overtime_id = :id
+      `;
+
+      const binds = {
+        id,
+        status: data.status,
+        notes: data.notes,
+        approvedBy: data.approvedBy,
+      };
+
+      const result = await conn.execute(sql, binds, { autoCommit: true });
+      console.log(`result = ${result}`);
+      if (result.rowsAffected === 0) {
+        throw new BadRequestError(`Overtime dengan id ${id} tidak ditemukan`);
+      }
+
+      return {
+        overtimeId: id,
+        status: data.status,
+        rowsAffected: result.rowsAffected,
+      };
+    } catch {
+      console.error("Error in OvertimeRepository.updateStatus:", error.message);
+    } finally {
+      if (conn) await conn.close();
+    }
+  }
+
+  async reject(id, data) {
+    let conn;
+
+    try {
+      conn = await getConnection();
+
+      const sql = `
+        UPDATE overtimes
+        SET
+          status = :status,
+          approved_by = :approvedBy,
+          approved_at = SYSDATE
+        WHERE overtime_id = :id
+      `;
+
+      const binds = {
+        id,
+        status: data.status,
+        approvedBy: data.approvedBy,
+      };
+
+      const result = await conn.execute(sql, binds, { autoCommit: true });
+      if (result.rowsAffected === 0) {
+        throw new BadRequestError(`Overtime dengan id ${id} tidak ditemukan`);
+      }
+
+      return {
+        overtimeId: id,
+        status: data.status,
+        rowsAffected: result.rowsAffected,
+      };
+    } catch {
+      console.error("Error in OvertimeRepository.rejected:", error.message);
     } finally {
       if (conn) await conn.close();
     }

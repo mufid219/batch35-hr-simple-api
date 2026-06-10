@@ -6,12 +6,69 @@ const {
 } = require("../utils/customError");
 
 class OvertimeService {
-  async getAllOvertimesById(id) {
-    const overtimes = await overtimeRepository.findAll(id);
-    if (!overtimes) {
-      throw new NotFoundError("No overtime found in the database");
+  async getAllOvertimesFromUser(id, filters = {}) {
+    const profile = await overtimeRepository.findEmployeeProfile(id);
+
+    let startDate = null;
+    let endDate = null;
+
+    if (
+      filters.fromMonth &&
+      filters.fromYear &&
+      filters.toMonth &&
+      filters.toYear
+    ) {
+      startDate = new Date(
+        Number(filters.fromYear),
+        Number(filters.fromMonth) - 1,
+        1,
+      );
+
+      endDate = new Date(Number(filters.toYear), Number(filters.toMonth), 0);
     }
-    return overtimes;
+
+    const overtimes = await overtimeRepository.findAllFromUser(
+      id,
+      startDate,
+      endDate,
+    );
+
+    return {
+      profile,
+      overtimes,
+    };
+  }
+
+  async getAllOvertimesFromManager(id, filters = {}) {
+    const profile = await overtimeRepository.findEmployeeProfile(id);
+
+    let startDate = null;
+    let endDate = null;
+
+    if (
+      filters.fromMonth &&
+      filters.fromYear &&
+      filters.toMonth &&
+      filters.toYear
+    ) {
+      startDate = new Date(
+        Number(filters.fromYear),
+        Number(filters.fromMonth) - 1,
+        1,
+      );
+
+      endDate = new Date(Number(filters.toYear), Number(filters.toMonth), 0);
+    }
+
+    const overtimes = await overtimeRepository.findAllFromManager(
+      startDate,
+      endDate,
+    );
+
+    return {
+      profile,
+      overtimes,
+    };
   }
 
   async createOvertime(data) {
@@ -49,6 +106,27 @@ class OvertimeService {
       );
     }
     return overtimeRepository.update(overtimeId, filtered);
+  }
+
+  async updateStatus(id, data, managerId) {
+    const allowedStatus = ["APPROVED", "REJECTED"];
+
+    if (!allowedStatus.includes(data.status)) {
+      throw new BadRequestError("Status harus APPROVED atau REJECTED");
+    }
+
+    return overtimeRepository.updateStatus(id, {
+      status: data.status,
+      notes: data.notes,
+      approvedBy: managerId,
+    });
+  }
+
+  async rejectedStatus(id, status, managerId) {
+    return overtimeRepository.reject(id, {
+      status: status,
+      approvedBy: managerId,
+    });
   }
 
   async deleteOvertime(overtimeId, employeeId) {
