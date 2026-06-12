@@ -1,11 +1,10 @@
 function calculateHours(startTime, endTime) {
-  const [sh, sm] = startTime.split(":").map(Number);
-  const [eh, em] = endTime.split(":").map(Number);
+  const start = new Date(startTime);
+  const end = new Date(endTime);
 
-  const start = sh * 60 + sm;
-  const end = eh * 60 + em;
+  const result = end - start;
 
-  return (end - start) / 60;
+  return result / (1000 * 60 * 60);
 }
 
 module.exports = calculateHours;

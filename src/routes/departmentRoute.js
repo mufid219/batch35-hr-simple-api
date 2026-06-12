@@ -6,6 +6,7 @@ const departmentController = require("../controllers/departmentController");
 //import middleware validasi & schema
 const {
   createDepartmentSchema,
+  updateDepartmentSchema,
 } = require("../validatation/departmentValidation");
 const { validateBody } = require("../middlewares/validateMiddleware");
 
@@ -22,7 +23,11 @@ router.post(
   departmentController.create,
 );
 
-router.put("/:id", departmentController.update);
+router.put(
+  "/:id",
+  validateBody(updateDepartmentSchema),
+  departmentController.update,
+);
 router.delete("/:id", departmentController.remove);
 
 module.exports = router;

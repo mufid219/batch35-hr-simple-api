@@ -1,5 +1,6 @@
 const { BadRequestError } = require("../utils/customError");
 const { oracledb, getConnection } = require("../utils/db");
+const formatTime = require("../utils/formatTime");
 const calculateHours = require("../utils/totalHours");
 
 class OvertimeRepository {
@@ -27,6 +28,7 @@ class OvertimeRepository {
         "Error in OvertimeRepository.findEmployeeProfile:",
         error.message,
       );
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -80,6 +82,7 @@ class OvertimeRepository {
         "Error in OvertimeRepository.findAllFromUser:",
         error.message,
       );
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -136,6 +139,7 @@ class OvertimeRepository {
         "Error in OvertimeRepository.findAllFromManager:",
         error.message,
       );
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -165,15 +169,22 @@ class OvertimeRepository {
         RETURNING overtime_id 
         INTO :out_id  
       `;
-      const totalHours = calculateHours(data.startTime, data.endTime);
+      console.log(data.overtimeDate);
+      console.log(data.startTime);
+      console.log(data.endTime);
+      const startDateTime = new Date(
+        `${data.overtimeDate}T${data.startTime}:00`,
+      );
+      const endDateTime = new Date(`${data.overtimeDate}T${data.endTime}:00`);
+      const totalHours = calculateHours(startDateTime, endDateTime);
       const result = await conn.execute(
         sql,
         {
           employeeId: data.employeeId,
           projectName: data.projectName,
           overtimeDate: data.overtimeDate,
-          startTime: data.startTime,
-          endTime: data.endTime,
+          startTime: startDateTime,
+          endTime: endDateTime,
           totalHours: totalHours,
           out_id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT },
         },
@@ -186,6 +197,7 @@ class OvertimeRepository {
       };
     } catch (error) {
       console.error("Error in OvertimeRepository.create:", error.message);
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -199,6 +211,7 @@ class OvertimeRepository {
         SELECT 
           overtime_id   AS "overtimeId",
           employee_id   AS "employeeId",
+          overtime_date AS "overtimeDate",
           start_time    AS "startTime",
           end_time      AS "endTime",
           status        AS "status"
@@ -210,12 +223,13 @@ class OvertimeRepository {
       return result.rows[0] || null;
     } catch {
       console.error("Error in OvertimeRepository.findById:", error.message);
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
   }
 
-  async update(id, data) {
+  async update(id, data, existing) {
     let conn;
     try {
       conn = await getConnection();
@@ -223,9 +237,8 @@ class OvertimeRepository {
       const fieldMap = {
         projectName: "project_name = :projectName",
         overtimeDate: "overtime_date = TO_DATE(:overtimeDate, 'YYYY-MM-DD')",
-        startTime: "start_time = :startTime",
-        endTime: "end_time = :endTime",
-        notes: "notes = :notes",
+        startTime: "start_time =  TO_DATE(:startTime, 'HH24:MI')",
+        endTime: "end_time = TO_DATE(:endTime, 'HH24:MI')",
       };
 
       const setClauses = [];
@@ -242,12 +255,22 @@ class OvertimeRepository {
         throw new BadRequestError("Tidak ada field yang diupdate");
       }
 
+      const dataExist = existing;
+      console.log(dataExist.overtimeDate);
+
       // Hitung ulang total_hours jika jam berubah
       if (data.startTime !== undefined || data.endTime !== undefined) {
-        const existing = await this.findById(id);
+        const overtimeDate = data.overtimeDate
+          ? data.overtimeDate
+          : existing.overtimeDate.toISOString().slice(0, 10);
         const startTime = data.startTime ?? existing.startTime;
         const endTime = data.endTime ?? existing.endTime;
-        const totalHours = calculateHours(startTime, endTime);
+
+        const startDateTime = new Date(`${overtimeDate}T${startTime}:00`);
+
+        const endDateTime = new Date(`${overtimeDate}T${endTime}:00`);
+
+        const totalHours = calculateHours(startDateTime, endDateTime);
 
         setClauses.push("total_hours = :totalHours");
         binds.totalHours = totalHours;
@@ -268,6 +291,7 @@ class OvertimeRepository {
       return { overtimeId: id, rowsAffected: result.rowsAffected };
     } catch {
       console.error("Error in OvertimeRepository.update:", error.message);
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -309,6 +333,7 @@ class OvertimeRepository {
       };
     } catch {
       console.error("Error in OvertimeRepository.updateStatus:", error.message);
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -347,6 +372,7 @@ class OvertimeRepository {
       };
     } catch {
       console.error("Error in OvertimeRepository.rejected:", error.message);
+      throw error;
     } finally {
       if (conn) await conn.close();
     }
@@ -370,6 +396,7 @@ class OvertimeRepository {
       return { overtimeId: id, rowsAffected: result.rowsAffected };
     } catch (error) {
       console.error("Error in OvertimeRepository.delete:", error.message);
+      throw error;
     } finally {
       if (conn) await conn.close();
     }

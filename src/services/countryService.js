@@ -16,28 +16,28 @@ class CountryService {
   }
 
   async createCountry(countryData) {
-    if (!countryData.countryId || countryData.countryId.length !== 2) {
-      const error = new Error(
-        "Country ID harus diisi dan wajib 2 karakter (contoh: ID)",
-      );
-      error.statusCode = 400;
-      throw error;
-    }
-    if (!countryData.countryName) {
-      const error = new Error("Country wajib diisi");
-      error.statusCode = 400;
-      throw error;
-    }
-    if (countryData.countryName.length > 40) {
-      const error = new Error("Country length name too long! Max 40 character");
-      error.statusCode = 400;
-      throw error;
-    }
-    if (!countryData.regionId) {
-      const error = new Error("Region id wajib diisi");
-      error.statusCode = 400;
-      throw error;
-    }
+    // if (!countryData.countryId || countryData.countryId.length !== 2) {
+    //   const error = new Error(
+    //     "Country ID harus diisi dan wajib 2 karakter (contoh: ID)",
+    //   );
+    //   error.statusCode = 400;
+    //   throw error;
+    // }
+    // if (!countryData.countryName) {
+    //   const error = new Error("Country wajib diisi");
+    //   error.statusCode = 400;
+    //   throw error;
+    // }
+    // if (countryData.countryName.length > 40) {
+    //   const error = new Error("Country length name too long! Max 40 character");
+    //   error.statusCode = 400;
+    //   throw error;
+    // }
+    // if (!countryData.regionId) {
+    //   const error = new Error("Region id wajib diisi");
+    //   error.statusCode = 400;
+    //   throw error;
+    // }
 
     return await countryRepository.create(countryData);
   }

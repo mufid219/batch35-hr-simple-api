@@ -28,6 +28,18 @@ const createRegionCountriesSchema = z.object({
     .min(1, "At least one country must be provided in the array."),
 });
 
+const createOrUpdateRegionSchema = z.object({
+  regionName: z
+    .string({
+      required_error: "Region name is required.",
+      invalid_type_error: "Region name must be a string.",
+    })
+    .min(2, "Region name must be at least 2 characters long.")
+    .max(30, "Region name is too long. Max 30 characters.")
+    .trim(), // otomatis hapus spasi kosong di awal atau di akhir kalimat
+});
+
 module.exports = {
   createRegionCountriesSchema,
+  createOrUpdateRegionSchema,
 };

@@ -27,6 +27,26 @@ const createDepartmentSchema = z.object({
     .optional(),
 });
 
+const updateDepartmentSchema = z.object({
+  departmentName: z
+    .string({
+      required_error: "Department name is required.",
+      invalid_type_error: "Department name must be a string.",
+    })
+    .min(2, "Department name must be at least 2 characters long.")
+    .max(30, "Department name is too long. Max 30 characters.")
+    .trim(), // otomatis hapus spasi kosong di awal atau di akhir kalimat
+
+  locationId: z
+    .number({
+      invalid_type_error: "Location ID must be a number.",
+    })
+    .positive("Location ID must be a positive number.")
+    .nullable()
+    .optional(),
+});
+
 module.exports = {
   createDepartmentSchema,
+  updateDepartmentSchema,
 };

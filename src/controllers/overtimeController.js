@@ -3,9 +3,9 @@ const overtimeService = require("../services/overtimeService");
 class OvertimeController {
   findAllFromUser = async (req, res, next) => {
     try {
-      const { id } = req.body;
+      const { id } = req.query;
       const { fromMonth, fromYear, toMonth, toYear } = req.query;
-      const data = await overtimeService.getAllOvertimesFromUser(id, {
+      const data = await overtimeService.getAllOvertimesFromUser(Number(id), {
         fromMonth,
         fromYear,
         toMonth,
@@ -20,7 +20,7 @@ class OvertimeController {
 
   findAllFromManager = async (req, res, next) => {
     try {
-      const { id } = req.body;
+      const { id } = req.query;
       const { fromMonth, fromYear, toMonth, toYear } = req.query;
       const data = await overtimeService.getAllOvertimesFromManager(id, {
         fromMonth,
@@ -28,6 +28,20 @@ class OvertimeController {
         toMonth,
         toYear,
       });
+
+      return res.success("Overtime retrived successfully", data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  findById = async (req, res, next) => {
+    try {
+      const { id } = req.query;
+
+      const overtimeId = req.params.id;
+
+      const data = await overtimeService.getById(overtimeId, id);
 
       return res.success("Overtime retrived successfully", data);
     } catch (error) {
@@ -48,11 +62,11 @@ class OvertimeController {
   updateOvertime = async (req, res, next) => {
     try {
       const overtimeId = Number(req.params.id);
-      const employeeId = Number(req.body.employeeId);
+      const { id } = req.query;
 
       const data = await overtimeService.updateOvertime(
         overtimeId,
-        employeeId,
+        Number(id),
         req.body,
       );
 
@@ -64,14 +78,14 @@ class OvertimeController {
 
   updateStatus = async (req, res, next) => {
     try {
-      const { id } = req.params;
+      const overtimeId = Number(req.params.id);
 
-      const { managerId } = req.body;
+      const { id } = req.query;
 
       const data = await overtimeService.updateStatus(
-        Number(id),
+        overtimeId,
         req.body,
-        managerId,
+        Number(id),
       );
 
       return res.success("Overtime updated successfully", data);
@@ -82,16 +96,16 @@ class OvertimeController {
 
   rejectStatus = async (req, res, next) => {
     try {
-      const { id } = req.params;
+      const overtimeId = Number(req.params.id);
 
-      const { managerId } = req.body;
+      const { id } = req.query;
 
       const status = "REJECTED";
 
       const data = await overtimeService.rejectedStatus(
-        Number(id),
+        overtimeId,
         status,
-        managerId,
+        Number(id),
       );
 
       return res.success("Overtime updated successfully", data);
@@ -103,9 +117,9 @@ class OvertimeController {
   remove = async (req, res, next) => {
     try {
       const overtimeId = Number(req.params.id);
-      const employeeId = Number(req.body.employeeId);
+      const { id } = req.query;
 
-      const data = await overtimeService.deleteOvertime(overtimeId, employeeId);
+      const data = await overtimeService.deleteOvertime(overtimeId, Number(id));
 
       return res.success("Overtime deleted successfully", data);
     } catch (error) {

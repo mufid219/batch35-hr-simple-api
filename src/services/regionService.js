@@ -19,16 +19,16 @@ class RegionService {
   }
 
   async createRegion(regionName) {
-    if (!regionName) {
-      const error = new Error("Region wajib diisi");
-      error.statusCode = 400;
-      throw error;
-    }
-    if (regionName.length > 25) {
-      const error = new Error("Region length name too long! Max 25 character");
-      error.statusCode = 400;
-      throw error;
-    }
+    // if (!regionName) {
+    //   const error = new Error("Region wajib diisi");
+    //   error.statusCode = 400;
+    //   throw error;
+    // }
+    // if (regionName.length > 25) {
+    //   const error = new Error("Region length name too long! Max 25 character");
+    //   error.statusCode = 400;
+    //   throw error;
+    // }
 
     return await regionRepository.create(regionName);
   }

@@ -71,10 +71,20 @@ class OvertimeService {
     };
   }
 
+  async getById(overtimeId, id) {
+    const profile = await overtimeRepository.findEmployeeProfile(id);
+
+    const overtime = await overtimeRepository.findById(overtimeId);
+    return {
+      profile,
+      overtime,
+    };
+  }
+
   async createOvertime(data) {
-    if (!data) {
-      throw new BadRequestError("Data wajib diisi");
-    }
+    // if (!data) {
+    //   throw new BadRequestError("Data wajib diisi");
+    // }
     return await overtimeRepository.create(data);
   }
 
@@ -87,32 +97,40 @@ class OvertimeService {
       );
     }
 
-    if (existing.status !== "PENDING") {
+    if (existing.status !== "REQUEST") {
       throw new BadRequestError(
         `Overtime dengan status ${existing.status} tidak dapat diubah`,
       );
     }
 
-    const allowed = ["projectName", "overtimeDate", "startTime", "endTime"];
-    const filtered = {};
-
-    for (const key of allowed) {
-      if (data[key] !== undefined) filtered[key] = data[key];
+    if (
+      (data.startTime && !data.endTime) ||
+      (!data.startTime && data.endTime)
+    ) {
+      throw new BadRequestError("startTime dan endTime harus diisi bersamaan");
     }
+
+    const allowed = ["projectName", "overtimeDate", "startTime", "endTime"];
+
+    const filtered = Object.fromEntries(
+      allowed
+        .filter((key) => data[key] !== undefined)
+        .map((key) => [key, data[key]]),
+    );
 
     if (Object.keys(filtered).length === 0) {
       throw new BadRequestError(
         `Overtime dengan status ${existing.status} tidak dapat diubah`,
       );
     }
-    return overtimeRepository.update(overtimeId, filtered);
+    return overtimeRepository.update(overtimeId, filtered, existing);
   }
 
   async updateStatus(id, data, managerId) {
-    const allowedStatus = ["APPROVED", "REJECTED"];
+    const allowedStatus = ["APPROVED", "REJECTED", "PENDING"];
 
     if (!allowedStatus.includes(data.status)) {
-      throw new BadRequestError("Status harus APPROVED atau REJECTED");
+      throw new BadRequestError("Status harus PENDING, APPROVED atau REJECTED");
     }
 
     return overtimeRepository.updateStatus(id, {
@@ -138,7 +156,7 @@ class OvertimeService {
       );
     }
 
-    if (existing.status !== "PENDING") {
+    if (existing.status !== "REQUEST") {
       throw new BadRequestError(
         `Overtime dengan status ${existing.status} tidak dapat diubah`,
       );
